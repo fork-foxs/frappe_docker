@@ -3,7 +3,7 @@ name: build system Image base on json config provided
 
 
 on:
-  # workflow_dispatch:
+  workflow_dispatch:
   pull_request:
     types: [opened, reopened]
     branches: [main]
@@ -17,39 +17,36 @@ jobs:
     steps:
       - name: checkout Script content
         uses: actions/checkout@v2
-          
-      - name: Create first bench
-        run: |
-          mkdir -p ~/gitops
-          cp example.env ~/gitops/${{ github.event.pull_request.head.ref }}.env
-          sed -i 's/FRAPPE_SITE_NAME_HEADER=/FRAPPE_SITE_NAME_HEADER=${{ github.event.pull_request.head.ref }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-          sed -i 's/DBPASSWORd=/DBPASSWORd=${{ vars.MARIADB_PASSWORD }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-          echo "PORTS= $((8081 + RANDOM % 919))" >> ~/gitops/${{ github.event.pull_request.head.ref }}.env
-          echo PORTS= $((8081 + RANDOM % 919))
-        # sed -i 's/DBPASSWORD=/DP=DBPASSWORD=${{ vars.MARIADB_PASSWORD }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # sed -i 's/PORTS=/PORTS= $port1 /g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # sed -i 's/DB_PASSWORD=123/DB_PASSWORD=${{ vars.MARIADB_PASSWORD }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # sed -i 's/DB_HOST=/DB_HOST=mariadb-database/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # sed -i 's/DB_PORT=/DB_PORT=3306/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # sed -i 's/SITES=`${{ github.event.pull_request.head.ref }}`/SITES=\`${{ github.event.pull_request.head.ref }}\`/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # echo 'ROUTER=${{ github.event.pull_request.head.ref }}' >> ~/gitops/${{ github.event.pull_request.head.ref }}.env
-        # echo "BENCH_NETWORK=${{ github.event.pull_request.head.ref }}" >> ~/gitops/${{ github.event.pull_request.head.ref }}.env
 
-      - name: Create a yaml file to deploy container
-        run: |
-          docker-compose --project-name ${{ github.event.pull_request.head.ref }} \
-          --env-file ~/gitops/${{ github.event.pull_request.head.ref }}.env \
-          -f pwd.yml config > ~/gitops/${{ github.event.pull_request.head.ref }}.yaml
+      - name: build image
+        run: |    
+          git clone --recursive https://${{ secrets.GITHUB_TOKEN }}@github.com/fork-foxs/remittance_image_builder.git
+          cd remittance_image_builder
+          ./build_network_company_image.sh --tag="remittance_network_agent/${{ github.event.pull_request.head.ref }}:latest" --token="${{ secrets.TOCKEN }}" --frappe-path="https://github.com/fintechsys/frappe.git" --frappe-branch=version-14 --fintech-branch=develop
+      
+      # - name: Create first bench
+      #   run: |
+      #     mkdir -p ~/gitops
+      #     cp example.env ~/gitops/${{ github.event.pull_request.head.ref }}.env
+      #     sed -i 's/FRAPPE_SITE_NAME_HEADER=/FRAPPE_SITE_NAME_HEADER=${{ github.event.pull_request.head.ref }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
+      #     sed -i 's/DBPASSWORd=/DBPASSWORd=${{ vars.MARIADB_PASSWORD }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
+      #     echo "PORTS= $((8081 + RANDOM % 919))" >> ~/gitops/${{ github.event.pull_request.head.ref }}.env
+      
+      # - name: Create a yaml file to deploy container
+      #   run: |
+      #     docker-compose --project-name ${{ github.event.pull_request.head.ref }} \
+      #     --env-file ~/gitops/${{ github.event.pull_request.head.ref }}.env \
+      #     -f pwd.yml config > ~/gitops/${{ github.event.pull_request.head.ref }}.yaml
 
 
-      - name: Deploy the container
-        run: |
-          docker-compose --project-name ${{ github.event.pull_request.head.ref }} -f ~/gitops/${{ github.event.pull_request.head.ref }}.yaml up -d 
-      - name: Create the site
-        run: | 
-          sleep 60
-          docker-compose --project-name ${{ github.event.pull_request.head.ref }} exec backend \
-             bench new-site --no-mariadb-socket --admin-password=${{ vars.MARIADB_PASSWORD }} --db-root-password=${{ vars.MARIADB_PASSWORD }} --install-app erpnext --set-default ${{ github.event.pull_request.head.ref }}
+      # - name: Deploy the container
+      #   run: |
+      #     docker-compose --project-name ${{ github.event.pull_request.head.ref }} -f ~/gitops/${{ github.event.pull_request.head.ref }}.yaml up -d 
+      # - name: Create the site
+      #   run: | 
+      #     sleep 60
+      #     docker-compose --project-name ${{ github.event.pull_request.head.ref }} exec backend \
+      #        bench new-site --no-mariadb-socket --admin-password=${{ vars.MARIADB_PASSWORD }} --db-root-password=${{ vars.MARIADB_PASSWORD }} --install-app erpnext --set-default ${{ github.event.pull_request.head.ref }}
         
          
         
