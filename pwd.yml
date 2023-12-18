@@ -39,7 +39,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   create-site:
-    image: frappe/erpnext:v15.3.0
+    image: remittance_network_agent/${ERPNEXT_VERSION:?No ERPNext version set}:latest
     deploy:
       restart_policy:
         condition: none
