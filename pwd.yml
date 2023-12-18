@@ -112,6 +112,7 @@ services:
 
   queue-long:
     image: harbor.fintechsys.net/frappe-systems/remittance_network_agent:latest
+    deploy:
       restart_policy:
         condition: on-failure
     command:
