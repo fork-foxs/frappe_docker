@@ -1,16 +1,33 @@
 name: ZAP Full Scan
 on:
   workflow_dispatch:
-
+  
 jobs:
   zap_scan:
-    runs-on: 
-    # - ubuntu-latest
-    - self-hosted
+    runs-on: self-hosted
+    env:
+      ZAP_AUTH_HEADER_VALUE: Basic ${{ secrets.ZAP_BASIC_TOKEN }}
+    permissions: write-all
     name: Scan the webapplication
     steps:
-      - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.8.0
+      # - name: command lin
+      #   run: |
+      #     export ZAP_AUTH_HEADER_VALUE="${{ env.ZAP_AUTH_HEADER_VALUE }}"
+      #     echo ZAP_AUTH_HEADER_VALUE="${{ env.ZAP_AUTH_HEADER_VALUE }}" >> g.env
+      #     echo $GITHUB_ENV
+        
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
-          target: 'https://erp.fintechsys.net/'
+          ref: main
+      - name: ZAP Scan
+        # env:
+        #   ZAP_AUTH_HEADER_VALUE: Basic ${{ secrets.ZAP_BASIC_TOKEN }}
+        uses: zaproxy/action-full-scan@v0.8.0
+        with: 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue_title: Scan Results
+          cmd_options: '/usr/bin/docker run --env-file g.env -v /home/runner/work/Zap/Zap:/zap/wrk/:rw --network=host -e ZAP_AUTH_HEADER -e ZAP_AUTH_HEADER_VALUE -e ZAP_AUTH_HEADER_SITE -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py -t https://remittance.v1.fintechsys.net/admin/login -J report_json.json -w report_md.md -r report_html.html'
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'https://remittance.v1.fintechsys.net/admin/login/'
 
