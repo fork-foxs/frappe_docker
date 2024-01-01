@@ -24,11 +24,18 @@ jobs:
           cd remittance_image_builder
            ./build_network_company_image.sh --tag="remittance_network_agent/${{ github.event.pull_request.head.ref }}:latest" --token="${{ secrets.TOCKEN }}" --frappe-path="https://github.com/fintechsys/frappe.git" --frappe-branch=version-14 --fintech-branch=develop
 
+      - name: Create mariadb.env file
+        run: |
+         mkdir -p ~/gitops
+         echo "DB_PASSWORD=${{ vars.MARIADB_PASSWORD }}" > ~/gitops/mariadb.env 
+  
+      - name: Deploy MariaDB container
+        run: |
+         docker-compose --project-name mariadb --env-file ~/gitops/mariadb.env -f overrides/compose.mariadb-shared.yaml up -d
 
         # sed -i 's/BRANCH_NAME=/BRANCH_NAME=remittance_network_agent/${{ github.event.pull_request.head.ref }}:latest/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
       - name: Create first bench
         run: |
-          mkdir -p ~/gitops
           cp example.env ~/gitops/${{ github.event.pull_request.head.ref }}.env
           sed -i 's/BRANCH_NAME=/BRANCH_NAME=${{ github.event.pull_request.head.ref }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
           sed -i 's/FRAPPE_SITE_NAME_HEADER=/FRAPPE_SITE_NAME_HEADER=${{ github.event.pull_request.head.ref }}/g' ~/gitops/${{ github.event.pull_request.head.ref }}.env
