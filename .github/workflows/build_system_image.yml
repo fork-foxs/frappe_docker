@@ -12,7 +12,7 @@ jobs:
 
   job-image-build: 
     runs-on:
-     - self-hosted
+     - fintech_runner
      # - ubuntu-latest
     steps:
       - name: checkout Script content
